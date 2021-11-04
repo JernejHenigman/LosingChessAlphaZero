@@ -583,30 +583,19 @@ class MCTS():
         s = self.game.stringRepresentation(canonicalBoard)
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
 
-        if temp == 0:
-            bestAs = np.array(np.argwhere(counts == np.max(counts))).flatten()
-            bestA = np.random.choice(bestAs)
-            probs = [0] * len(counts)
-            probs[bestA] = 1
-            return probs
-
-        counts = [x ** (1. / temp) for x in counts]
-        counts_sum = float(sum(counts))
-        probs = [x / counts_sum for x in counts]
-
         engine = ""
         if platform == "linux" or platform == "linux2":
-            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64")
+            engine = chess.engine.SimpleEngine.popen_uci("./fairy-stockfish-largeboard_x86-64")
         elif platform == "darwin":
-            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64")
+            engine = chess.engine.SimpleEngine.popen_uci("./fairy-stockfish-largeboard_x86-64")
         elif platform == "win32":
-            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64.exe")
+            engine = chess.engine.SimpleEngine.popen_uci("./fairy-stockfish-largeboard_x86-64.exe")
 
         engine.configure({"Skill Level": 20})
 
         possible_moves_stockfish = get_move_evaluation(engine, canonicalBoard.board, time_per_move=0.01)
 
-        probs_ui = np.array(probs)
+        probs_ui = np.array(counts)
         policy_ui = np.argwhere(probs_ui)
 
         alpha_zero_moves = []
@@ -630,9 +619,20 @@ class MCTS():
         moves_df = pd.DataFrame({"StockfishMove": s_moves,
                                  "StockfishCPL": s_values,
                                  "AlphaZeroMove": a_moves,
-                                 "AlphaZeroProb": a_values})
+                                 "#ActionTaken": a_values})
 
-        moves_df.to_csv('moves.csv', index=False)
+        moves_df.to_csv('./moves.csv', index=False)
+
+        if temp == 0:
+            bestAs = np.array(np.argwhere(counts == np.max(counts))).flatten()
+            bestA = np.random.choice(bestAs)
+            probs = [0] * len(counts)
+            probs[bestA] = 1
+            return probs
+
+        counts = [x ** (1. / temp) for x in counts]
+        counts_sum = float(sum(counts))
+        probs = [x / counts_sum for x in counts]
 
         return probs
 
@@ -652,6 +652,7 @@ class MCTS():
         Returns:
             v: the negative of the value of the current canonicalBoard
         """
+
 
         s = self.game.stringRepresentation(canonicalBoard)
 
@@ -1192,8 +1193,7 @@ class StockFishPlayer():
     def __init__(self, game, time):
         self.game = game
         self.time = time
-        self.engine = chess.engine.SimpleEngine.popen_uci(
-            "C:/Users/jerne/Downloads/fairy-stockfish-largeboard_x86-64.exe")
+        self.engine = chess.engine.SimpleEngine.popen_uci("./fairy-stockfish-largeboard_x86-64.exe")
 
     def play(self, board):
 
@@ -1336,11 +1336,11 @@ class ChessBoard:
 
         color = self.blue
 
-        moves_df = pd.read_csv("moves.csv")
+        moves_df = pd.read_csv("./moves.csv")
 
         x = moves_df.to_string(header=False, index=False, index_names=False).split('\n')
         text = ['                       '.join(ele.split()) for ele in x]
-        text.insert(0, 'StockfishMove   StockfishCPL   AlphaZeroMove   AlphaZeroProb')
+        text.insert(0, 'StockfishMove   StockfishCPL   AlphaZeroMove   #ActionTaken')
 
         label = []
         for line in text:
@@ -1532,8 +1532,8 @@ def __main__():
     model = "checkpoint_563.pth.tar"
     num_mcts = 200
 
-    cpuct = 1.5
-    temp = 1
+    cpuct = 0
+    temp = 0
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
     game = AntiChessGame(8)
 
