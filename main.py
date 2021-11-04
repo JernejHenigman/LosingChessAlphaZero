@@ -7,6 +7,7 @@ import torch.optim as optim
 import logging
 import math
 import time
+import pandas as pd
 import chess.variant
 import chess.pgn
 import string
@@ -521,6 +522,18 @@ def get_action_from_move(move):
     return action
 
 
+def get_move_evaluation(engine, board, time_per_move=0.01):
+    list_moves = []
+    for el in board.legal_moves:
+        info = engine.analyse(board, chess.engine.Limit(time=time_per_move), root_moves=[el])
+        t = str(info["score"])
+        list_moves.append((str(el), info["score"].pov(board.turn).score(mate_score=1000000)))
+
+    sorted_list_moves = sorted(list_moves, key=lambda x: x[1], reverse=True)
+
+    return dict(sorted_list_moves)
+
+
 
 
 class MCTS():
@@ -580,6 +593,40 @@ class MCTS():
         counts = [x ** (1. / temp) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts]
+
+        engine = chess.engine.SimpleEngine.popen_uci("C:/Users/jerne/Downloads/fairy-stockfish-largeboard_x86-64.exe")
+        engine.configure({"Skill Level": 20})
+
+        possible_moves_stockfish = get_move_evaluation(engine, canonicalBoard.board, time_per_move=0.01)
+
+        probs_ui = np.array(probs)
+        policy_ui = np.argwhere(probs_ui)
+
+        alpha_zero_moves = []
+        for move, prob in zip(policy_ui, probs_ui[policy_ui]):
+            alpha_zero_moves.append((get_move_from_action(move[0]), round(prob[0], 7)))
+
+        sorted_alpha_zero_moves = sorted(alpha_zero_moves, key=lambda x: x[1], reverse=True)
+
+        a_moves = []
+        a_values = []
+        for move, value in dict(sorted_alpha_zero_moves).items():
+            a_moves.append(move)
+            a_values.append(value)
+
+        s_moves = []
+        s_values = []
+        for move, value in possible_moves_stockfish.items():
+            s_moves.append(move)
+            s_values.append(value)
+
+        moves_df = pd.DataFrame({"StockfishMove": s_moves,
+                                 "StockfishCPL": s_values,
+                                 "AlphaZeroMove": a_moves,
+                                 "AlphaZeroProb": a_values})
+
+        moves_df.to_csv('moves.csv', index=False)
+
         return probs
 
     def search(self, canonicalBoard, depth, dirichlet_noise=False):
@@ -1231,6 +1278,11 @@ class ChessBoard:
         self.chessBoard = self.init_chess_board()
 
         pygame.init()
+        pygame.font.init()
+        self.screen = pygame.display.get_surface()
+
+        self.myfont = pygame.font.SysFont('Arial', 15)
+
         # background color
         self.gameDisplay.fill(self.red)
         # caption
@@ -1276,6 +1328,19 @@ class ChessBoard:
     def draw_chess_board(self):
 
         color = self.blue
+
+        moves_df = pd.read_csv("moves.csv")
+
+        x = moves_df.to_string(header=False, index=False, index_names=False).split('\n')
+        text = ['                       '.join(ele.split()) for ele in x]
+        text.insert(0, 'StockfishMove   StockfishCPL   AlphaZeroMove   AlphaZeroProb')
+
+        label = []
+        for line in text:
+            label.append(self.myfont.render(line, False, (50, 50, 50)))
+
+        for line in range(len(label)):
+            self.gameDisplay.blit(label[line], [550, 0 + (15 * line)])
 
         for i in range(0, 8):
             if (color == self.green):
@@ -1433,6 +1498,8 @@ class ChessBoard:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     try:
                         self.game(mi, mj)
+                        self.screen.fill(pygame.Color("white")) # erases the entire screen surface
+
                     except Exception as e:
                         print(e)
 
@@ -1441,13 +1508,13 @@ class ChessBoard:
                         print("Human is playing with white pieces")
                         print("AlphaZero is playing with black pieces")
 
-                        self.__init__(800, 520, "white",gameLC=self.gameLC,fen=self.fen,agent=self.agent)
+                        self.__init__(1200, 520, "white",gameLC=self.gameLC,fen=self.fen,agent=self.agent)
 
                     if event.key == pygame.K_RETURN:
                         print("Human is playing with black pieces")
                         print("AlphaZero is playing with white pieces")
 
-                        self.__init__(800, 520, "black",gameLC=self.gameLC,fen=self.fen,agent=self.agent)
+                        self.__init__(1200, 520, "black",gameLC=self.gameLC,fen=self.fen,agent=self.agent)
 
             self.draw_chess_board()
             pygame.display.update()
@@ -1471,7 +1538,7 @@ def __main__():
     agent1 = lambda x: np.argmax(mcts1.getActionProb(x, temp=temp))
 
 
-    chessBoard = ChessBoard(800, 520, "white",gameLC=game,fen=fen,agent=agent1)
+    chessBoard = ChessBoard(1200, 520, "white",gameLC=game,fen=fen,agent=agent1)
     chessBoard.run_game()
 
 if __name__ == '__main__':
