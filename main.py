@@ -534,7 +534,7 @@ def get_move_evaluation(engine, board, time_per_move=0.01):
     return dict(sorted_list_moves)
 
 
-
+from sys import platform
 
 class MCTS():
     """
@@ -594,7 +594,14 @@ class MCTS():
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts]
 
-        engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64.exe")
+        engine = ""
+        if platform == "linux" or platform == "linux2":
+            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64")
+        elif platform == "darwin":
+            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64")
+        elif platform == "win32":
+            engine = chess.engine.SimpleEngine.popen_uci("fairy-stockfish-largeboard_x86-64.exe")
+
         engine.configure({"Skill Level": 20})
 
         possible_moves_stockfish = get_move_evaluation(engine, canonicalBoard.board, time_per_move=0.01)
