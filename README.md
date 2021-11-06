@@ -8,7 +8,7 @@ AlphaZero agent playing Losing Chess versus Human Player
 * Press ENTER to play with black pieces
 * Press SPACE to play with white pieces
 * Currently AlphaZero agent is playing with 854th iteration of learning
-* We added move evaluation based on stockfish engine, and move prob chosen by AlphaZero
+* We added move evaluation based on stockfish engine (centipawn loss), and move prob chosen by AlphaZero
 
 
 ![alt text](https://github.com/JernejHenigman/LosingChessAlphaZero/blob/master/chessboard.png?raw=true)
