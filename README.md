@@ -10,4 +10,4 @@ AlphaZero agent playing Losing Chess versus Human Player
 * Currently AlphaZero agent is playing with 854th iteration of learning
 
 
-<img width="621" alt="Screenshot 2021-11-04 at 12 14 11" src="https://user-images.githubusercontent.com/11997771/140304339-3fb32bf5-0e6d-46b5-8793-23808b1cbf49.png">
+![alt text](https://github.com/JernejHenigman/LosingChessAlphaZero/blob/[branch]/chessboard.png?raw=true)
