@@ -1530,7 +1530,7 @@ class ChessBoard:
 def __main__():
     os.chdir(sys.path[0])
     model = "checkpoint_854.pth.tar"
-    num_mcts = 2000
+    num_mcts = 150
 
     cpuct = 1.0
     temp = 0.5
