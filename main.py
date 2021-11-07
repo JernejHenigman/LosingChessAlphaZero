@@ -631,7 +631,7 @@ class MCTS():
         moves_df = pd.DataFrame({"StockfishMove": s_moves[:len(alpha_zero_moves)],
                                  "StockfishCPL": s_values[:len(alpha_zero_moves)],
                                  "AlphaZeroMove": a_moves[:len(alpha_zero_moves)],
-                                 "#ActionTaken": a_values[:len(alpha_zero_moves)]})
+                                 "AlphaZeroProb": a_values[:len(alpha_zero_moves)]})
 
         moves_df.to_csv('./moves.csv', index=False)
 
@@ -1530,10 +1530,10 @@ class ChessBoard:
 def __main__():
     os.chdir(sys.path[0])
     model = "checkpoint_854.pth.tar"
-    num_mcts = 150
+    num_mcts = 2000
 
     cpuct = 1.0
-    temp = 1.0
+    temp = 0.5
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
     game = AntiChessGame(8)
 
